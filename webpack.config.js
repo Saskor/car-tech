@@ -4,7 +4,7 @@ const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetWebpackPlugin = require('optimize-css-assets-webpack-plugin');
-/*const TerserWebpackPlugin = require('terser-webpack-plugin');*/
+const TerserPlugin = require('terser-webpack-plugin');
 const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
 
 console.log(process.env.NODE_ENV, 'process.env');
@@ -16,13 +16,14 @@ const optimization = () => {
         splitChunks: {
             chunks: 'all'
         },
+        minimize: true,
         minimizer: []
     };
 
     if (!isDev) {
         config.minimizer = [
-            new OptimizeCssAssetWebpackPlugin()
-            /*new TerserWebpackPlugin()*/
+            new OptimizeCssAssetWebpackPlugin(),
+            new TerserPlugin()
         ]
     }
 
@@ -38,9 +39,16 @@ const cssLoaders = (extra = '') => {
             options: {
                 hmr: isDev,
                 reloadAll: true
-            },
+            }
         },
-        'css-loader'
+        {
+            loader: 'css-loader',
+            options: {
+                modules: {
+                    localIdentName: isDev ? '[path][name]__[local]' : '[sha1:hash:hex:4]'
+                }
+            }
+        }
     ];
 
     if (extra) {
@@ -80,26 +88,27 @@ const jsLoaders = () => {
 
     return loaders
 };
-
 const plugins = () => {
     const base = [
         new HTMLWebpackPlugin({
-            template: './index.html',
+            template: path.resolve(__dirname, './src/index.html'),
             minify: {
                 collapseWhitespace: !isDev
             }
         }),
         new CleanWebpackPlugin(),
-        new CopyWebpackPlugin({
+        /*new CopyWebpackPlugin({
             patterns: [
-                { from: path.resolve(__dirname, 'src'), to: path.resolve(__dirname, 'dist') }
+                {
+                    from: path.resolve(__dirname, 'src'),
+                    to: path.resolve(__dirname, 'dist') }
             ],
             options: {
                 concurrency: 100,
             },
-        }),
+        }),*/
         new MiniCssExtractPlugin({
-            filename: filename('css')
+            filename: 'style.[contenthash].css'
         })
     ];
 
@@ -113,15 +122,15 @@ const plugins = () => {
 module.exports = {
     context: path.resolve(__dirname, 'src'),
     mode: 'development',
-    entry: {main: path.resolve(__dirname, './src')},
+    entry: {main: path.resolve(__dirname, './src/index.tsx')},
     output: {
         publicPath: "http://localhost:35781",
         filename: filename('js'),
         path: path.resolve(__dirname, 'dist')
     },
     resolve: {
-        extensions: ['.ts', '.tsx', '.js', '.jsx'],
-        modules: ['node_modules']
+        extensions: ['.ts', '.tsx', '.js', '.jsx', '.css', '.scss'],
+        modules: ['src', 'node_modules']
     },
     optimization: optimization(),
     devServer: {

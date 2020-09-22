@@ -1,8 +1,5 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import {App} from "components/app/app";
 
-const Container = () => (
-    <h3>Connect four</h3>
-);
-
-ReactDOM.render(<Container />, document.getElementById("app"));
+ReactDOM.render(<App />, document.getElementById("app"));
